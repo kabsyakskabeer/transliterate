@@ -1,27 +1,49 @@
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
-  <title>Home Page</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
+  <title>Custom Keyboard</title>
+  <style>
+    .keyboard {
+      border: 1px solid black;
+      padding: 10px;
+    }
+
+    .key {
+      display: inline-block;
+      border: 1px solid gray;
+      padding: 5px 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
-
 <body>
-      <div contenteditable virtualkeyboardpolicy="manual" id="editor"></div>
-<script>
-  if ("virtualKeyboard" in navigator) {
-    navigator.virtualKeyboard.overlaysContent = true;
+  <div class="keyboard" id="keyboard"></div>
+	<script>
+      const keyboard = new VisualKeyboard();
+const keyboardElement = document.getElementById('keyboard');
 
-    const editor = document.getElementById("editor");
-    editor.addEventListener("dblclick", () => {
-      navigator.virtualKeyboard.show();
-    });
-  }
-</script>       
-  
+// Add keys to the keyboard
+keyboard.addKey('q');
+keyboard.addKey('w');
+keyboard.addKey('e');
+// ... add more keys as needed
+
+// Customize key appearance
+keyboard.element.classList.add('keyboard');
+keyboard.keys.forEach(key => {
+  key.classList.add('key');
+});
+
+// Handle key presses
+keyboard.addEventListener('input', (event) => {
+  console.log(event.data);
+  // You can use the input character here, e.g., to insert it into a text input field
+});
+
+// Append the keyboard to the DOM
+keyboardElement.appendChild(keyboard.element);
+
+    </script>
 </body>
 </html>
