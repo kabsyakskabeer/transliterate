@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Visual Keyboard Example</title>
+<title>Visual Keyboard with Custom Key</title>
 <style>
   #myInput {
     width: 300px;
@@ -12,45 +12,39 @@
 </head>
 <body>
 
-<h1>Visual Keyboard Demo</h1>
+<h1>Visual Keyboard with Custom Key</h1>
 
 <input type="text" id="myInput" placeholder="Type here...">
-
 
 <script>
   const inputElement = document.getElementById('myInput');
 
-  // Check if Visual Keyboard API is supported
-  if (navigator.virtualKeyboard) { 
+  if (navigator.virtualKeyboard) {
     const virtualKeyboard = navigator.virtualKeyboard;
 
-    // Show the visual keyboard when the input is focused.
     inputElement.addEventListener('focus', () => {
       virtualKeyboard.show();
     });
 
-    // Optionally, hide the keyboard on blur (losing focus)
-    inputElement.addEventListener('blur', () => {
-      virtualKeyboard.hide(); // This might not work reliably across all browsers
+    // Customize the layout: Replace "c" with "ƙ"
+    virtualKeyboard.getLayoutMap().then(layoutMap => {
+      // Remove the original "c" key.
+      layoutMap.delete('c');
+
+      // Add the "ƙ" key in place of "c".  Adjust "layer" as needed if using Shift, etc.
+      layoutMap.set('ƙ', { value: 'ƙ', layer: 0 }); // or { value: 'ƙ', layer: 'shift' } etc.
+
+
+      // Apply the modified layout
+      return virtualKeyboard.setLayoutMap(layoutMap);
+    }).catch(error => {
+        console.error("Error customizing keyboard layout:", error);
     });
-
-     // Optional: Layout customization.  Check browser compatibility.
-      virtualKeyboard.getLayoutMap().then(layoutMap => {
-    //    // Modify the layout map as needed (e.g., add custom keys)
-    //    // Example: Add a custom ":)" key:
-        layoutMap.set(':)', { value: 'k)' });  // Key, then key definition
-
-        virtualKeyboard.setLayoutMap(layoutMap);
-      });
 
 
   } else {
-    // Provide a fallback or message if the API is not supported
-    alert("Visual Keyboard API not supported in this browser.");
-    // Or consider using a polyfill for older browsers
+    alert("Visual Keyboard API not supported.");
   }
-
-
 </script>
 
 </body>
