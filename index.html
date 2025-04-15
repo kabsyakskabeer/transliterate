@@ -1,102 +1,120 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Virtual Keyboard Demo</title>
-  <!-- CSS -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Keyboard - Q Removed</title>
+  <!-- Load CSS first -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
   <style>
-    .container {
+    body {
+      font-family: Arial, sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
     }
-    .input-field {
-      margin: 20px 0;
-      padding: 10px;
-      width: 100%;
-      font-size: 16px;
+    .input-container {
+      margin-bottom: 20px;
     }
-    .keyboard-container {
-      margin-top: 20px;
+    #userInput {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .simple-keyboard {
+      max-width: 800px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Virtual Keyboard kdemo</h1>
-    
-    <input class="input-field" id="textInput" placeholder="Click here to use virtual keyboard">
-    
-    <div class="keyboard-container">
-      <div id="keyboard"></div>
-    </div>
+  <h1>Custom Keyboard Without Q</h1>
+  
+  <div class="input-container">
+    <input type="text" id="userInput" placeholder="Click here to type...">
   </div>
+  
+  <div id="keyboard"></div>
 
-  <!-- JavaScript -->
+  <!-- Load JavaScript last -->
   <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const Keyboard = window.SimpleKeyboard.default;
-      const inputField = document.getElementById('textInput');
-      
-      // Initialize keyboard
-      const keyboard = new Keyboard({
-        onChange: input => {
-          inputField.value = input;
-        },
-        onKeyPress: button => {
-          // Handle special buttons
-          if (button === "{shift}" || button === "{lock}") handleShift();
-        },
-        theme: "hg-theme-default hg-layout-default",
-        layout: {
-          'default': [
-            '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
-            '{tab} k w e r t y u i o p [ ] \\',
-            '{lock} a s d f g h j k l ; \' {enter}',
-            '{shift} z x c v b n m , . / {shift}',
-            '{space}'
-          ],
-          'shift': [
-            '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
-            '{tab} Q W E R T Y U I O P { } |',
-            '{lock} A S D F G H J K L : " {enter}',
-            '{shift} Z X C V B N M < > ? {shift}',
-            '{space}'
-          ]
-        },
-        display: {
-          '{bksp}': '⌫',
-          '{enter}': 'enter ↵',
-          '{tab}': 'tab ⇥',
-          '{lock}': 'caps ⇪',
-          '{shift}': 'shift ⇧',
-          '{space}': 'space'
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        // Check if SimpleKeyboard is loaded
+        if (typeof SimpleKeyboard === 'undefined') {
+          throw new Error('SimpleKeyboard library failed to load');
         }
-      });
 
-      // Update keyboard when input changes
-      inputField.addEventListener('input', function() {
-        keyboard.setInput(this.value);
-      });
-
-      // Focus handling
-      inputField.addEventListener('focus', function() {
-        keyboard.setOptions({
-          inputName: 'textInput'
-        });
-      });
-
-      // Shift handling
-      function handleShift() {
-        const currentLayout = keyboard.options.layoutName;
-        const shiftToggle = currentLayout === "default" ? "shift" : "default";
+        const Keyboard = SimpleKeyboard.default;
         
-        keyboard.setOptions({
-          layoutName: shiftToggle
+        const keyboard = new Keyboard({
+          onChange: input => onChange(input),
+          onKeyPress: button => onKeyPress(button),
+          physicalKeyboardHighlight: true,
+          layout: {
+            default: [
+              "` 1 2 3 4 5 6 7 8 9 0 - = {bksp}",
+              "{tab} w e r t y u i o p [ ] \\",
+              "{lock} a s d f g h j k l ; ' {enter}",
+              "{shift} z x c v b n m , . / {shift}",
+              ".com @ {space}"
+            ],
+            shift: [
+              "~ ! @ # $ % ^ & * ( ) _ + {bksp}",
+              "{tab} W E R T Y U I O P { } |",
+              "{lock} A S D F G H J K L : \" {enter}",
+              "{shift} Z X C V B N M < > ? {shift}",
+              ".com @ {space}"
+            ]
+          },
+          display: {
+            "{bksp}": "⌫",
+            "{enter}": "enter ↵",
+            "{tab}": "tab ⇥",
+            "{lock}": "caps ⇪",
+            "{shift}": "shift ⇧",
+            "{space}": "space"
+          }
         });
+
+        const userInput = document.getElementById("userInput");
+
+        function onChange(input) {
+          userInput.value = input;
+          console.log("Input changed", input);
+        }
+
+        function onKeyPress(button) {
+          console.log("Button pressed", button);
+          
+          if (button === "{shift}" || button === "{lock}") {
+            handleShift();
+          }
+        }
+
+        function handleShift() {
+          const currentLayout = keyboard.options.layoutName;
+          const shiftToggle = currentLayout === "default" ? "shift" : "default";
+          
+          keyboard.setOptions({
+            layoutName: shiftToggle
+          });
+        }
+
+        userInput.addEventListener("input", event => {
+          keyboard.setInput(event.target.value);
+        });
+
+        userInput.addEventListener("focus", () => {
+          console.log("Input focused");
+          keyboard.setInput(userInput.value);
+        });
+
+        console.log("Keyboard initialized successfully");
+      } catch (error) {
+        console.error("Initialization error:", error);
+        alert(`Keyboard initialization failed: ${error.message}`);
       }
     });
   </script>
