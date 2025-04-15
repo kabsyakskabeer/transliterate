@@ -1,51 +1,104 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>Visual Keyboard with Custom Key</title>
-<style>
-  #myInput {
-    width: 300px;
-    padding: 10px;
-    font-size: 16px;
-  }
-</style>
+  <meta charset="utf-8">
+  <title>Virtual Keyboard Demo</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
+  <style>
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .input-field {
+      margin: 20px 0;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+    }
+    .keyboard-container {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Virtual Keyboard Demo</h1>
+    
+    <input class="input-field" id="textInput" placeholder="Click here to use virtual keyboard">
+    
+    <div class="keyboard-container">
+      <div id="keyboard"></div>
+    </div>
+  </div>
 
-<h1>Visual Keyboard with Custom Key2</h1>
+  <!-- JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const Keyboard = window.SimpleKeyboard.default;
+      const inputField = document.getElementById('textInput');
+      
+      // Initialize keyboard
+      const keyboard = new Keyboard({
+        onChange: input => {
+          inputField.value = input;
+        },
+        onKeyPress: button => {
+          // Handle special buttons
+          if (button === "{shift}" || button === "{lock}") handleShift();
+        },
+        theme: "hg-theme-default hg-layout-default",
+        layout: {
+          'default': [
+            '` 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
+            '{tab} q w e r t y u i o p [ ] \\',
+            '{lock} a s d f g h j k l ; \' {enter}',
+            '{shift} z x c v b n m , . / {shift}',
+            '{space}'
+          ],
+          'shift': [
+            '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
+            '{tab} Q W E R T Y U I O P { } |',
+            '{lock} A S D F G H J K L : " {enter}',
+            '{shift} Z X C V B N M < > ? {shift}',
+            '{space}'
+          ]
+        },
+        display: {
+          '{bksp}': '⌫',
+          '{enter}': 'enter ↵',
+          '{tab}': 'tab ⇥',
+          '{lock}': 'caps ⇪',
+          '{shift}': 'shift ⇧',
+          '{space}': 'space'
+        }
+      });
 
-<input type="text" id="myInput" placeholder="Type here...">
+      // Update keyboard when input changes
+      inputField.addEventListener('input', function() {
+        keyboard.setInput(this.value);
+      });
 
-<script>
-  const inputElement = document.getElementById('myInput');
+      // Focus handling
+      inputField.addEventListener('focus', function() {
+        keyboard.setOptions({
+          inputName: 'textInput'
+        });
+      });
 
-  if (navigator.virtualKeyboard) {
-    const virtualKeyboard = navigator.virtualKeyboard;
-
-    inputElement.addEventListener('focus', () => {
-      virtualKeyboard.show();
+      // Shift handling
+      function handleShift() {
+        const currentLayout = keyboard.options.layoutName;
+        const shiftToggle = currentLayout === "default" ? "shift" : "default";
+        
+        keyboard.setOptions({
+          layoutName: shiftToggle
+        });
+      }
     });
-
-    // Customize the layout: Replace "c" with "ƙ"
-    virtualKeyboard.getLayoutMap().then(layoutMap => {
-      // Remove the original "c" key.
-      layoutMap.delete('c');
-
-      // Add the "ƙ" key in place of "c".  Adjust "layer" as needed if using Shift, etc.
-      layoutMap.set('ƙ', { value: 'ƙ', layer: 0 }); // or { value: 'ƙ', layer: 'shift' } etc.
-
-
-      // Apply the modified layout
-      return virtualKeyboard.setLayoutMap(layoutMap);
-    }).catch(error => {
-        console.error("Error customizing keyboard layout:", error);
-    });
-
-
-  } else {
-    alert("Visual Keyboard API not supported.");
-  }
-</script>
-
+  </script>
 </body>
 </html>
