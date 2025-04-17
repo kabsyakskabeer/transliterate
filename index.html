@@ -32,15 +32,12 @@
             padding-bottom: 60vh;
         }
         
-        h1 {
-            font-size: 1.5rem;
-            text-align: center;
-            margin: 10px 0;
-        }
+        
         
         .input-field {
             font-family: Ruwudu, san-serif;
-            width: calc(100% - 30px);
+            
+            width: 48%;
             padding: 15px;
             font-size: 16px;
             margin: 10px 0;
@@ -49,7 +46,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             color: var(--text-color);
-            caret-color: transparent;
+            caret-color: whitesmoke;
             outline: none;
             -webkit-tap-highlight-color: transparent;
             resize: none;
@@ -202,12 +199,20 @@
                 font-size: 10px;
             }
         }
+        .input-container {
+          margin: auto;
+          width: 100%;
+          display: flexbox;
+          
+        }
     </style>
 </head>
 <body>
-    <h1>Dual Language Keyboard</h1>
-    <textarea id="englishInput" class="input-field" placeholder="English text (tap here)" readonly></textarea>
-    <textarea id="arabicInput" class="input-field" placeholder="النص العربي (اضغط هنا)" readonly></textarea>
+    
+  <div class="input-container">
+     <textarea id="englishInput" class="input-field" placeholder="English text (tap here)" readonly></textarea>
+ <textarea id="arabicInput" class="input-field" placeholder="النص العربي (اضغط هنا)" readonly></textarea>
+  </div>
     
     <div id="keyboardContainer">
         <div class="keyboard-outer">
@@ -474,4 +479,4 @@
         });
     </script>
 </body>
-</html>
+    </html>
