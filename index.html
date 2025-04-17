@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile-Friendly Custom Keyboard</title>
+    <title>Dual Language Keyboard</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -26,7 +26,7 @@
             touch-action: manipulation;
             min-height: 100vh;
             box-sizing: border-box;
-            padding-bottom: 60vh; /* Space for keyboard */
+            padding-bottom: 60vh;
         }
         
         h1 {
@@ -35,11 +35,11 @@
             margin: 10px 0;
         }
         
-        #textInput {
-            width: 100%;
+        .input-field {
+            width: calc(100% - 30px);
             padding: 15px;
             font-size: 16px;
-            margin: 10px 0 20px;
+            margin: 10px 0;
             box-sizing: border-box;
             background-color: #252525;
             border: 1px solid var(--border-color);
@@ -51,7 +51,7 @@
             resize: none;
         }
         
-        #textInput.keyboard-visible {
+        .input-field.keyboard-visible {
             caret-color: var(--text-color);
         }
         
@@ -62,26 +62,39 @@
             left: 0;
             right: 0;
             background-color: var(--bg-color);
-            padding: 8px 4px;
+            padding: 8px 0;
             box-shadow: 0 -4px 15px var(--shadow-color);
             z-index: 1000;
             border-top: 1px solid var(--border-color);
             touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        
+        .keyboard-outer {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .keyboard-inner {
+            max-width: 100%;
+            overflow-x: auto;
+            padding-bottom: 5px;
         }
         
         .keyboard-row {
             display: flex;
             justify-content: center;
             margin-bottom: 6px;
-            width: 100%;
-            touch-action: manipulation;
+            min-width: fit-content;
+            padding: 0 5px;
         }
         
         .key {
             height: 48px;
-            min-width: 8%;
+            min-width: 34px;
             margin: 0 2px;
-            padding: 0 2px;
+            padding: 0 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -94,7 +107,7 @@
             touch-action: manipulation;
             box-shadow: 0 2px 0 var(--shadow-color);
             transition: transform 0.1s, background-color 0.1s;
-            flex: 1;
+            flex-shrink: 0;
         }
         
         .key:active, .key.active {
@@ -106,17 +119,15 @@
         .key-special {
             background-color: var(--special-key-color);
             font-size: 14px;
-            flex: 1.5;
+            min-width: 50px;
         }
         
         .key-space {
-            flex: 8;
-            min-width: 40%;
+            min-width: 150px;
         }
         
         .key-shift, .key-enter, .key-backspace, .key-tab, .key-caps {
-            flex: 1.5;
-            min-width: 12%;
+            min-width: 60px;
         }
         
         .key-backspace::before {
@@ -139,70 +150,130 @@
             content: "↵";
         }
 
-        /* Mobile-specific adjustments */
+        .key-lang {
+            min-width: 70px;
+            font-size: 12px;
+        }
+
         @media (max-width: 600px) {
             .key {
                 height: 42px;
+                min-width: 36px;
+                padding: 0 6px;
                 font-size: 14px;
             }
-            #textInput {
-                font-size: 15px;
-                padding: 12px;
+            .key-special {
+                min-width: 45px;
+                font-size: 13px;
+            }
+            .key-space {
+                min-width: 120px;
+            }
+            .key-shift, .key-enter, .key-backspace, .key-tab, .key-caps {
+                min-width: 50px;
+            }
+            .key-lang {
+                min-width: 60px;
+                font-size: 11px;
             }
         }
 
         @media (max-width: 400px) {
             .key {
                 height: 38px;
+                min-width: 32px;
+                padding: 0 4px;
                 font-size: 13px;
                 margin: 0 1px;
+            }
+            .key-special {
+                min-width: 40px;
+                font-size: 12px;
+            }
+            .key-space {
+                min-width: 100px;
+            }
+            .key-lang {
+                min-width: 50px;
+                font-size: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <h1>Custom Mobile Keyboard</h1>
-    <textarea id="textInput" placeholder="Tap here to type..." readonly></textarea>
-    <div id="keyboardContainer"></div>
+    <h1>Dual Language Keyboard</h1>
+    <textarea id="englishInput" class="input-field" placeholder="English text (tap here)" readonly></textarea>
+    <textarea id="arabicInput" class="input-field" placeholder="النص العربي (اضغط هنا)" readonly></textarea>
+    
+    <div id="keyboardContainer">
+        <div class="keyboard-outer">
+            <div class="keyboard-inner">
+                <!-- Keyboard rows will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
 
-    <!-- Sound effects (host these files yourself in production) -->
     <audio id="keySound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3" preload="auto"></audio>
     <audio id="keySoundSpecial" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const textInput = document.getElementById('textInput');
+            const englishInput = document.getElementById('englishInput');
+            const arabicInput = document.getElementById('arabicInput');
             const keyboardContainer = document.getElementById('keyboardContainer');
+            const keyboardInner = document.querySelector('.keyboard-inner');
             const keySound = document.getElementById('keySound');
             const keySoundSpecial = document.getElementById('keySoundSpecial');
             
             let isShift = false;
             let isCaps = false;
             let activeKey = null;
+            let currentLanguage = 'english';
+            let activeInput = null;
 
-            // Keyboard layout (Q replaced with K)
-            const layout = {
-                default: [
-                    ['`','1','2','3','4','5','6','7','8','9','0','-','=',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
-                    [{class: 'key-special key-tab', display: '', value: 'Tab'},'k','w','e','r','t','y','u','i','o','p','[',']','\\'],
-                    [{class: 'key-special key-caps', display: '', value: 'Caps'},'a','s','d','f','g','h','j','k','l',';',"'",{class: 'key-special key-enter', display: '', value: 'Enter'}],
-                    [{class: 'key-special key-shift', display: '', value: 'Shift'},'z','x','c','v','b','n','m',',','.','/',{class: 'key-special key-shift', display: '', value: 'Shift'}],
-                    [{class: 'key-special key-space', display: 'Space', value: ' '}]
-                ],
-                shift: [
-                    ['~','!','@','#','$','%','^','&','*','(',')','_','+',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
-                    [{class: 'key-special key-tab', display: '', value: 'Tab'},'K','W','E','R','T','Y','U','I','O','P','{','}','|'],
-                    [{class: 'key-special key-caps', display: '', value: 'Caps'},'A','S','D','F','G','H','J','K','L',':','"',{class: 'key-special key-enter', display: '', value: 'Enter'}],
-                    [{class: 'key-special key-shift', display: '', value: 'Shift'},'Z','X','C','V','B','N','M','<','>','?',{class: 'key-special key-shift', display: '', value: 'Shift'}],
-                    [{class: 'key-special key-space', display: 'Space', value: ' '}]
-                ]
+            // Keyboard layouts
+            const layouts = {
+                english: {
+                    default: [
+                        ['`','1','2','3','4','5','6','7','8','9','0','-','=',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
+                        [{class: 'key-special key-tab', display: '', value: 'Tab'},'k','w','e','r','t','y','u','i','o','p','[',']','\\'],
+                        [{class: 'key-special key-caps', display: '', value: 'Caps'},'a','s','d','f','g','h','j','k','l',';',"'",{class: 'key-special key-enter', display: '', value: 'Enter'}],
+                        [{class: 'key-special key-shift', display: '', value: 'Shift'},'z','x','c','v','b','n','m',',','.','/',{class: 'key-special key-shift', display: '', value: 'Shift'}],
+                        [{class: 'key-special key-space', display: 'Space', value: ' '},{class: 'key-special key-lang', display: 'عربي', value: 'SwitchLang'}]
+                    ],
+                    shift: [
+                        ['~','!','@','#','$','%','^','&','*','(',')','_','+',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
+                        [{class: 'key-special key-tab', display: '', value: 'Tab'},'K','W','E','R','T','Y','U','I','O','P','{','}','|'],
+                        [{class: 'key-special key-caps', display: '', value: 'Caps'},'A','S','D','F','G','H','J','K','L',':','"',{class: 'key-special key-enter', display: '', value: 'Enter'}],
+                        [{class: 'key-special key-shift', display: '', value: 'Shift'},'Z','X','C','V','B','N','M','<','>','?',{class: 'key-special key-shift', display: '', value: 'Shift'}],
+                        [{class: 'key-special key-space', display: 'Space', value: ' '},{class: 'key-special key-lang', display: 'عربي', value: 'SwitchLang'}]
+                    ]
+                },
+                arabic: {
+                    default: [
+                        ['ذ','1','2','3','4','5','6','7','8','9','0','-','=',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
+                        [{class: 'key-special key-tab', display: '', value: 'Tab'},'ض','ص','ث','ق','ف','غ','ع','ه','خ','ح','ج','د','\\'],
+                        [{class: 'key-special key-caps', display: '', value: 'Caps'},'ش','س','ي','ب','ل','ا','ت','ن','م','ك','ط',{class: 'key-special key-enter', display: '', value: 'Enter'}],
+                        [{class: 'key-special key-shift', display: '', value: 'Shift'},'ئ','ء','ؤ','ر','ى','ة','و','ز','ظ','.','/',{class: 'key-special key-shift', display: '', value: 'Shift'}],
+                        [{class: 'key-special key-space', display: 'Space', value: ' '},{class: 'key-special key-lang', display: 'English', value: 'SwitchLang'}]
+                    ],
+                    shift: [
+                        ['ّ','!','@','#','$','%','^','&','*','(',')','_','+',{class: 'key-special key-backspace', display: '', value: 'Backspace'}],
+                        [{class: 'key-special key-tab', display: '', value: 'Tab'},'َ','ً','ُ','ٌ','ِ','ٍ','~','ّ','ْ','}','{','}','|'],
+                        [{class: 'key-special key-caps', display: '', value: 'Caps'},'ِ','ٍ',']','[','أ','آ','ة','»','«',':','"',{class: 'key-special key-enter', display: '', value: 'Enter'}],
+                        [{class: 'key-special key-shift', display: '', value: 'Shift'},'~','ء','ؤ','ر','ى','ة','و','ز','ظ','؟','/',{class: 'key-special key-shift', display: '', value: 'Shift'}],
+                        [{class: 'key-special key-space', display: 'Space', value: ' '},{class: 'key-special key-lang', display: 'English', value: 'SwitchLang'}]
+                    ]
+                }
             };
 
             // Create keyboard
             function createKeyboard(layoutName = 'default') {
-                keyboardContainer.innerHTML = '';
+                keyboardInner.innerHTML = '';
                 
-                layout[layoutName].forEach(row => {
+                const layout = layouts[currentLanguage][isShift || isCaps ? 'shift' : 'default'];
+                
+                layout.forEach(row => {
                     const rowDiv = document.createElement('div');
                     rowDiv.className = 'keyboard-row';
                     
@@ -213,13 +284,20 @@
                             keyElement.className = `key ${key.class}`;
                             keyElement.textContent = key.display;
                             keyElement.dataset.value = key.value;
+                            
+                            // Highlight active shift/caps state
+                            if (key.value === 'Shift') {
+                                keyElement.classList.toggle('active', isShift);
+                            }
+                            if (key.value === 'Caps') {
+                                keyElement.classList.toggle('active', isCaps);
+                            }
                         } else {
                             keyElement.className = 'key';
                             keyElement.textContent = key;
                             keyElement.dataset.value = key;
                         }
                         
-                        // Touch/mouse event handlers
                         keyElement.addEventListener('pointerdown', (e) => {
                             e.preventDefault();
                             handleKeyDown(keyElement);
@@ -233,13 +311,13 @@
                         rowDiv.appendChild(keyElement);
                     });
                     
-                    keyboardContainer.appendChild(rowDiv);
+                    keyboardInner.appendChild(rowDiv);
                 });
             }
 
             // Handle key down
             function handleKeyDown(keyElement) {
-                if (activeKey) return;
+              //  if (activeKey) return;
                 
                 activeKey = keyElement;
                 keyElement.classList.add('active');
@@ -261,22 +339,33 @@
             function handleKeyUp(keyElement) {
                 if (activeKey !== keyElement) return;
                 keyElement.classList.remove('active');
+                
+                // Keep shift/caps highlighted if active
+                if (keyElement.dataset.value === 'Shift' && isShift) {
+                    keyElement.classList.add('active');
+                }
+                if (keyElement.dataset.value === 'Caps' && isCaps) {
+                    keyElement.classList.add('active');
+                }
+                
                 activeKey = null;
             }
 
             // Handle key presses
             function handleKeyPress(key) {
-                const startPos = textInput.selectionStart;
-                const endPos = textInput.selectionEnd;
-                const currentValue = textInput.value;
+                if (!activeInput) return;
+                
+                const startPos = activeInput.selectionStart;
+                const endPos = activeInput.selectionEnd;
+                const currentValue = activeInput.value;
                 
                 switch(key) {
                     case 'Backspace':
                         if (startPos === endPos && startPos > 0) {
-                            textInput.value = currentValue.substring(0, startPos - 1) + currentValue.substring(endPos);
+                            activeInput.value = currentValue.substring(0, startPos - 1) + currentValue.substring(endPos);
                             setCursorPosition(startPos - 1);
                         } else {
-                            textInput.value = currentValue.substring(0, startPos) + currentValue.substring(endPos);
+                            activeInput.value = currentValue.substring(0, startPos) + currentValue.substring(endPos);
                             setCursorPosition(startPos);
                         }
                         break;
@@ -285,73 +374,96 @@
                         break;
                     case 'Caps':
                         isCaps = !isCaps;
-                        createKeyboard(isShift || isCaps ? 'shift' : 'default');
+                        createKeyboard();
                         break;
                     case 'Enter':
                         insertAtCursor('\n');
                         break;
                     case 'Shift':
                         isShift = !isShift;
-                        createKeyboard(isShift || isCaps ? 'shift' : 'default');
+                        createKeyboard();
+                        break;
+                    case 'SwitchLang':
+                        currentLanguage = currentLanguage === 'english' ? 'arabic' : 'english';
+                        isShift = false;
+                        isCaps = false;
+                        createKeyboard();
                         break;
                     case ' ':
                         insertAtCursor(' ');
                         break;
                     default:
                         insertAtCursor(key);
+                        // Auto-disable shift after one character (unless caps is on)
                         if (isShift && !isCaps) {
                             isShift = false;
-                            createKeyboard('default');
+                            createKeyboard();
                         }
                 }
                 
-                textInput.focus();
+                // Maintain focus after key press
+                setTimeout(() => {
+                    activeInput.focus();
+                }, 10);
             }
 
             // Insert text at cursor position
             function insertAtCursor(text) {
-                const startPos = textInput.selectionStart;
-                const endPos = textInput.selectionEnd;
-                textInput.value = textInput.value.substring(0, startPos) + text + textInput.value.substring(endPos);
+                const startPos = activeInput.selectionStart;
+                const endPos = activeInput.selectionEnd;
+                activeInput.value = activeInput.value.substring(0, startPos) + text + activeInput.value.substring(endPos);
                 setCursorPosition(startPos + text.length);
             }
 
             // Set cursor position
             function setCursorPosition(pos) {
-                textInput.selectionStart = pos;
-                textInput.selectionEnd = pos;
+                activeInput.selectionStart = pos;
+                activeInput.selectionEnd = pos;
             }
 
             // Initialize keyboard
             createKeyboard();
 
             // Show keyboard when textarea is focused
-            textInput.addEventListener('focus', function() {
-                keyboardContainer.style.display = 'block';
-                textInput.classList.add('keyboard-visible');
-                // Scroll to show input field (for mobile)
-                setTimeout(() => {
-                    textInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            });
+            function handleFocus(inputElement) {
+                return function() {
+                    activeInput = inputElement;
+                    keyboardContainer.style.display = 'block';
+                    inputElement.classList.add('keyboard-visible');
+                    setTimeout(() => {
+                        inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                };
+            }
 
-            // Hide keyboard when clicking outside
+            englishInput.addEventListener('focus', handleFocus(englishInput));
+            arabicInput.addEventListener('focus', handleFocus(arabicInput));
+
+            // Hide keyboard when clicking outside (but not on keys)
             document.addEventListener('pointerdown', function(e) {
-                if (e.target !== textInput && !keyboardContainer.contains(e.target)) {
+                const isKeyboardKey = e.target.closest('.key');
+                if (e.target !== englishInput && e.target !== arabicInput && 
+                    !keyboardContainer.contains(e.target) && !isKeyboardKey) {
                     keyboardContainer.style.display = 'none';
-                    textInput.classList.remove('keyboard-visible');
+                    englishInput.classList.remove('keyboard-visible');
+                    arabicInput.classList.remove('keyboard-visible');
                 }
             });
 
             // Prevent default keyboard completely
-            textInput.addEventListener('pointerdown', function(e) {
+            englishInput.addEventListener('pointerdown', function(e) {
+                e.preventDefault();
+                this.focus();
+            });
+            
+            arabicInput.addEventListener('pointerdown', function(e) {
                 e.preventDefault();
                 this.focus();
             });
             
             // Additional prevention for iOS
             document.addEventListener('touchmove', function(e) {
-                if (e.target === textInput || keyboardContainer.contains(e.target)) {
+                if (e.target === englishInput || e.target === arabicInput || keyboardContainer.contains(e.target)) {
                     e.preventDefault();
                 }
             }, { passive: false });
