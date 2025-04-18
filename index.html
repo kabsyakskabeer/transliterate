@@ -205,14 +205,60 @@
           display: flexbox;
           
         }
+        
+          .file-picker {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #word-list {
+            margin-top: 20px;
+            columns: 3;
+            column-gap: 20px;
+        }
+        #word-list li {
+            break-inside: avoid;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        #word-list li:hover {
+            color: #0066cc;
+            text-decoration: underline;
+        }
+        .file-info {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
     
+      <div class="file-picker">
+        <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx">
+        <p>Choose a PDF, TXT, DOC, or DOCX file</p>
+    </div>
+    
   <div class="input-container">
-     <textarea id="englishInput" class="input-field" placeholder="English text (tap here)" readonly></textarea>
- <textarea id="arabicInput" class="input-field" placeholder="النص العربي (اضغط هنا)" readonly></textarea>
+     <textarea rows="1" id="englishInput" class="input-field" placeholder="English text (tap here)" readonly></textarea>
+ <textarea id="arabicInput" rows="1" class="input-field" placeholder="النص العربي (اضغط هنا)" readonly></textarea>
   </div>
+  
+  
+    
+    <div class="file-info" id="fileInfo"></div>
+    <div class="error" id="error"></div>
+    
+    <div id="results">
+        <h2>Unique Words (<span id="wordCount">0</span>):</h2>
+        <ol id="word-list"></ol>
+    </div>
+  
+  
     
     <div id="keyboardContainer">
         <div class="keyboard-outer">
@@ -477,6 +523,160 @@
                 }
             }, { passive: false });
         });
+        
+        
+      document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Clear previous results
+  document.getElementById('word-list').innerHTML = '';
+  document.getElementById('error').textContent = '';
+  document.getElementById('fileInfo').textContent = `Selected file: ${file.name}`;
+  document.getElementById('wordCount').textContent = '0';
+
+  const fileType = file.type;
+  const fileName = file.name.toLowerCase();
+
+  // Check if file is text (txt)
+  if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+    processTextFile(file);
+  }
+  // Check if file is PDF
+  else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+    processPDFFile(file);
+  }
+  // Check if file is Word document
+  else if (
+    fileType === 'application/msword' ||
+    fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    fileName.endsWith('.doc') ||
+    fileName.endsWith('.docx')
+  ) {
+    processWordFile(file);
+  }
+  else {
+    document.getElementById('error').textContent = 'Unsupported file type. Please select a PDF, TXT, DOC, or DOCX file.';
+  }
+}
+
+function processTextFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    extractAndDisplayWords(text);
+  };
+  reader.readAsText(file);
+}
+
+function processPDFFile(file) {
+  // PDF.js library is needed to extract text from PDFs
+  if (typeof pdfjsLib === 'undefined') {
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js', function() {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+      extractTextFromPDF(file);
+    });
+  } else {
+    extractTextFromPDF(file);
+  }
+}
+
+function extractTextFromPDF(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const typedarray = new Uint8Array(e.target.result);
+
+    pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+      let text = '';
+      const numPages = pdf.numPages;
+      const pageTextPromises = [];
+
+      for (let i = 1; i <= numPages; i++) {
+        pageTextPromises.push(pdf.getPage(i).then(function(page) {
+          return page.getTextContent().then(function(textContent) {
+            return textContent.items.map(item => item.str).join(' ');
+          });
+        }));
+      }
+
+      Promise.all(pageTextPromises).then(function(pagesText) {
+        text = pagesText.join(' ');
+        extractAndDisplayWords(text);
+      });
+    }).catch(function(error) {
+      document.getElementById('error').textContent = 'Error reading PDF: ' + error.message;
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processWordFile(file) {
+  // Mammoth.js library is needed to extract text from Word docs
+  if (typeof mammoth === 'undefined') {
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js', function() {
+      extractTextFromWord(file);
+    });
+  } else {
+    extractTextFromWord(file);
+  }
+}
+
+function extractTextFromWord(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const arrayBuffer = e.target.result;
+
+    mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+      .then(function(result) {
+        extractAndDisplayWords(result.value);
+      })
+      .catch(function(error) {
+        document.getElementById('error').textContent = 'Error reading Word document: ' + error.message;
+      });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function extractAndDisplayWords(text) {
+  // Normalize and extract words
+  const words = text
+    .toLowerCase()
+    .replace(/[^\w\s]|_/g, '') // Remove punctuation except spaces
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .split(' ') // Split into words
+    .filter(word => word.length > 0) // Remove empty strings
+    .filter(word => !/^\d+$/.test(word)); // Exclude numbers
+
+  // Get unique words and sort them
+  const uniqueWords = [...new Set(words)].sort();
+
+  // Display the words
+  const wordListElement = document.getElementById('word-list');
+  uniqueWords.forEach(word => {
+    const li = document.createElement('li');
+    li.textContent = word;
+
+    // Add click event listener
+    li.addEventListener('click', function() {
+      console.log("Clicked word:", word);
+      englishInput.value = word;
+    });
+
+    wordListElement.appendChild(li);
+  });
+
+  // Update word count
+  document.getElementById('wordCount').textContent = uniqueWords.length;
+}
+
+function loadScript(url, callback) {
+  const script = document.createElement('script');
+  script.src = url;
+  script.onload = callback;
+  document.head.appendChild(script);
+}
     </script>
 </body>
     </html>
